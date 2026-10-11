@@ -575,8 +575,35 @@ function initPWA() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('ServiceWorker activo:', reg.scope))
+        .then(reg => {
+          console.log('ServiceWorker activo:', reg.scope);
+
+          // Forzar chequeo de actualización inmediata en cada apertura
+          reg.update();
+
+          // Si hay un nuevo service worker esperando o instalándose
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // Notificar al usuario o recargar suavemente
+                if (confirm('✨ Hay una nueva versión disponible. ¿Actualizar ahora?')) {
+                  window.location.reload();
+                }
+              }
+            });
+          });
+        })
         .catch(err => console.log('Error ServiceWorker:', err));
+
+      // Si el controlador del ServiceWorker cambia, recargar para ver la nueva versión
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          window.location.reload();
+        }
+      });
     });
   }
 
