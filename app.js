@@ -13,15 +13,13 @@ const STATE = {
   topicNotes: {},
   currentView: 'curriculum', // 'curriculum' | 'path'
   searchQuery: '',
-  theme: 'dark',
-  manuallyExpandedModules: new Set() // Control de módulos abiertos manualmente
+  manuallyExpandedModules: new Set()
 };
 
 const XP_PER_TOPIC = 15;
 
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
-  initTheme();
   initPWA();
   renderApp();
   setupEventListeners();
@@ -38,11 +36,6 @@ function loadState() {
     if (savedNotes) {
       STATE.topicNotes = JSON.parse(savedNotes);
     }
-
-    const savedTheme = localStorage.getItem('mathmaster_theme');
-    if (savedTheme) {
-      STATE.theme = savedTheme;
-    }
   } catch (e) {
     console.error('Error cargando estado:', e);
   }
@@ -52,24 +45,9 @@ function saveState() {
   try {
     localStorage.setItem('mathmaster_completed', JSON.stringify([...STATE.completedTopics]));
     localStorage.setItem('mathmaster_notes', JSON.stringify(STATE.topicNotes));
-    localStorage.setItem('mathmaster_theme', STATE.theme);
   } catch (e) {
     console.error('Error guardando estado:', e);
   }
-}
-
-function initTheme() {
-  document.documentElement.setAttribute('data-theme', STATE.theme);
-  const themeLabel = document.getElementById('settings-theme-label');
-  if (themeLabel) {
-    themeLabel.textContent = STATE.theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
-  }
-}
-
-function toggleTheme() {
-  STATE.theme = STATE.theme === 'dark' ? 'light' : 'dark';
-  initTheme();
-  saveState();
 }
 
 // Calcular estadísticas globales
@@ -162,7 +140,7 @@ function renderFocusBanner() {
     if (current.isAllCompleted) {
       titleEl.textContent = current.topicTitle;
     } else {
-      titleEl.textContent = `${current.moduleTitle} ➔ ${current.topicTitle}`;
+      titleEl.innerHTML = `<strong>${current.moduleTitle}</strong> ➔ ${current.topicTitle}`;
     }
   }
 }

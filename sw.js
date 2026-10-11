@@ -1,11 +1,11 @@
-const CACHE_NAME = 'mathmaster-v3';
+const CACHE_NAME = 'mathmaster-v4';
 
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './style.css?v=3.0',
-  './data.js?v=3.0',
-  './app.js?v=3.0',
+  './style.css?v=4.0',
+  './data.js?v=4.0',
+  './app.js?v=4.0',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
@@ -42,7 +42,6 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(e.request.url);
 
   if (url.origin === location.origin) {
-    // Network first para que el móvil reciba cambios siempre que tenga conexión
     e.respondWith(
       fetch(e.request)
         .then((networkResponse) => {
