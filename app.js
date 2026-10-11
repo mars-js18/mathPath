@@ -1,24 +1,22 @@
 /**
  * MathMaster - Lógica de la Aplicación PWA
- * Manejo de estado, gamificación (XP, Niveles, Rachas), LocalStorage,
- * renderizado dinámico, notas personales, exportar/importar y Service Worker.
+ * - Sin rachas (simplificado y libre de presión)
+ * - Módulos replegados por defecto, desplegando únicamente el módulo activo donde te encuentras
+ * - Acceso directo superior con botón "Ir ahora" al primer tema pendiente
+ * - Ruta estilo Duolingo minimalista y ordenada verticalmente (sin amontonamientos)
+ * - Persistencia local y soporte offline PWA
  */
 
-// Estado global de la app
 const STATE = {
   completedTopics: new Set(),
   topicNotes: {},
-  streak: 1,
-  lastActiveDate: null,
   currentView: 'curriculum', // 'curriculum' | 'path'
   searchQuery: '',
   theme: 'dark'
 };
 
-// Constantes de gamificación
 const XP_PER_TOPIC = 15;
 
-// Inicialización
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   initTheme();
@@ -27,7 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
 });
 
-// Cargar estado de localStorage
 function loadState() {
   try {
     const savedCompleted = localStorage.getItem('mathmaster_completed');
@@ -44,45 +41,21 @@ function loadState() {
     if (savedTheme) {
       STATE.theme = savedTheme;
     }
-
-    const lastActive = localStorage.getItem('mathmaster_last_active');
-    const savedStreak = localStorage.getItem('mathmaster_streak');
-    const today = new Date().toISOString().slice(0, 10);
-
-    if (lastActive) {
-      const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
-      if (lastActive === today) {
-        STATE.streak = savedStreak ? parseInt(savedStreak, 10) : 1;
-      } else if (lastActive === yesterday) {
-        STATE.streak = savedStreak ? parseInt(savedStreak, 10) : 1;
-      } else {
-        STATE.streak = 1; // Racha reiniciada
-      }
-    } else {
-      STATE.streak = 1;
-    }
-
-    STATE.lastActiveDate = today;
-    localStorage.setItem('mathmaster_last_active', today);
-    localStorage.setItem('mathmaster_streak', STATE.streak.toString());
   } catch (e) {
     console.error('Error cargando estado:', e);
   }
 }
 
-// Guardar estado en localStorage
 function saveState() {
   try {
     localStorage.setItem('mathmaster_completed', JSON.stringify([...STATE.completedTopics]));
     localStorage.setItem('mathmaster_notes', JSON.stringify(STATE.topicNotes));
-    localStorage.setItem('mathmaster_streak', STATE.streak.toString());
     localStorage.setItem('mathmaster_theme', STATE.theme);
   } catch (e) {
     console.error('Error guardando estado:', e);
   }
 }
 
-// Inicializar Tema Claro / Oscuro
 function initTheme() {
   document.documentElement.setAttribute('data-theme', STATE.theme);
   const themeBtn = document.getElementById('theme-toggle');
@@ -97,7 +70,7 @@ function toggleTheme() {
   saveState();
 }
 
-// Cálculos de estadísticas y niveles estilo Duolingo
+// Calcular estadísticas globales
 function calculateStats() {
   let totalTopics = 0;
   MATH_CURRICULUM.forEach(mod => {
@@ -120,10 +93,47 @@ function calculateStats() {
   };
 }
 
+// Detectar cuál es el tema actual en el que vas (el primer tema no completado)
+function getCurrentProgressPoint() {
+  for (const module of MATH_CURRICULUM) {
+    for (const chapter of module.chapters) {
+      for (const topic of chapter.topics) {
+        if (!STATE.completedTopics.has(topic.id)) {
+          return {
+            moduleId: module.id,
+            moduleTitle: module.title,
+            chapterId: chapter.id,
+            chapterTitle: chapter.title,
+            topicId: topic.id,
+            topicTitle: topic.title,
+            isAllCompleted: false
+          };
+        }
+      }
+    }
+  }
+
+  // Si completó todos
+  const lastMod = MATH_CURRICULUM[MATH_CURRICULUM.length - 1];
+  const lastChap = lastMod.chapters[lastMod.chapters.length - 1];
+  const lastTopic = lastChap.topics[lastChap.topics.length - 1];
+  return {
+    moduleId: lastMod.id,
+    moduleTitle: lastMod.title,
+    chapterId: lastChap.id,
+    chapterTitle: lastChap.title,
+    topicId: lastTopic.id,
+    topicTitle: "¡Felicidades! Has completado toda la ruta matemática",
+    isAllCompleted: true
+  };
+}
+
 // Renderizado principal
 function renderApp() {
   updateHeaderStats();
-  renderHeroCard();
+  renderDiscreteProgress();
+  renderFocusBanner();
+
   if (STATE.currentView === 'curriculum') {
     renderCurriculumView();
   } else {
@@ -131,41 +141,82 @@ function renderApp() {
   }
 }
 
-// Actualizar barra superior (Racha, XP, Nivel)
 function updateHeaderStats() {
   const stats = calculateStats();
-  const streakEl = document.getElementById('stat-streak');
   const xpEl = document.getElementById('stat-xp');
   const levelEl = document.getElementById('stat-level');
 
-  if (streakEl) streakEl.textContent = `${STATE.streak} d`;
   if (xpEl) xpEl.textContent = `${stats.totalXp} XP`;
   if (levelEl) levelEl.textContent = `Nvl ${stats.level}`;
 }
 
-// Renderizar Tarjeta Hero con la barra general
-function renderHeroCard() {
+// Barra de progreso discreta arriba
+function renderDiscreteProgress() {
   const stats = calculateStats();
-  const titleEl = document.getElementById('hero-percentage');
-  const fillEl = document.getElementById('hero-progress-fill');
-  const countEl = document.getElementById('hero-topic-count');
+  const fillEl = document.getElementById('compact-fill');
+  const percentEl = document.getElementById('compact-percentage');
+  const countEl = document.getElementById('compact-count');
 
-  if (titleEl) titleEl.textContent = `${stats.percentage}% Completado`;
   if (fillEl) fillEl.style.width = `${stats.percentage}%`;
-  if (countEl) countEl.textContent = `${stats.completedCount} de ${stats.totalTopics} temas dominados`;
+  if (percentEl) percentEl.textContent = `${stats.percentage}%`;
+  if (countEl) countEl.textContent = `(${stats.completedCount} de ${stats.totalTopics} temas)`;
 }
 
-// Renderizar Vista Temario Completo (Duolingo & Khan Academy)
+// Banner de acceso directo superior "Donde voy"
+function renderFocusBanner() {
+  const current = getCurrentProgressPoint();
+  const titleEl = document.getElementById('focus-topic-name');
+  if (titleEl) {
+    if (current.isAllCompleted) {
+      titleEl.textContent = current.topicTitle;
+    } else {
+      titleEl.innerHTML = `<strong>${current.moduleTitle}</strong> ➔ ${current.topicTitle}`;
+    }
+  }
+}
+
+// Acción de saltar directo al tema en el que voy
+function jumpToCurrentTopic() {
+  const current = getCurrentProgressPoint();
+  if (current.isAllCompleted) return;
+
+  if (STATE.currentView !== 'curriculum') {
+    switchView('curriculum');
+  }
+
+  setTimeout(() => {
+    // Abrir el módulo
+    const card = document.getElementById(`module-card-${current.moduleId}`);
+    if (card && card.classList.contains('collapsed')) {
+      card.classList.remove('collapsed');
+    }
+
+    // Scroll al tema exacto y animación
+    const topicEl = document.querySelector(`[data-topic-id="${current.topicId}"]`);
+    if (topicEl) {
+      topicEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      topicEl.classList.add('highlight-next');
+      setTimeout(() => {
+        topicEl.classList.remove('highlight-next');
+      }, 2500);
+    } else if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+}
+
+// Renderizar Vista Temario Completo
+// REGLA SOLICITADA: Todos los módulos replegados (collapsed) excepto en el que estás actualmente
 function renderCurriculumView() {
   const container = document.getElementById('main-content-view');
   if (!container) return;
 
+  const current = getCurrentProgressPoint();
   const query = STATE.searchQuery.toLowerCase().trim();
 
   let html = `<div class="modules-container">`;
 
-  MATH_CURRICULUM.forEach((module, modIndex) => {
-    // Calcular progreso del módulo
+  MATH_CURRICULUM.forEach((module) => {
     let modTotal = 0;
     let modCompleted = 0;
     module.chapters.forEach(chap => {
@@ -176,8 +227,11 @@ function renderCurriculumView() {
     });
 
     const modPercent = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
+    const isCurrentModule = (module.id === current.moduleId);
 
-    // Filtrado de capítulos y temas si hay búsqueda activa
+    // Solo se expande si es el módulo actual o si hay una búsqueda activa
+    const isCollapsed = query ? false : !isCurrentModule;
+
     let chaptersHtml = '';
     let hasMatchingTopics = false;
 
@@ -205,13 +259,15 @@ function renderCurriculumView() {
               <span class="chapter-badge-count">${chapCompleted}/${filteredTopics.length}</span>
             </div>
             ${chap.note ? `<div class="chapter-note">💡 ${chap.note}</div>` : ''}
-            ${chap.bibliography ? `<div class="chapter-biblio">📚 Bibliografía recomendada: ${chap.bibliography}</div>` : ''}
+            ${chap.bibliography ? `<div class="chapter-biblio">📚 Texto: ${chap.bibliography}</div>` : ''}
             <div class="topics-list">
               ${filteredTopics.map(topic => {
                 const isDone = STATE.completedTopics.has(topic.id);
+                const isNext = (topic.id === current.topicId);
                 const hasNote = Boolean(STATE.topicNotes[topic.id]);
+
                 return `
-                  <div class="topic-item ${isDone ? 'completed' : ''}" data-topic-id="${topic.id}">
+                  <div class="topic-item ${isDone ? 'completed' : ''} ${isNext ? 'highlight-next' : ''}" data-topic-id="${topic.id}">
                     <div class="topic-checkbox-circle" onclick="toggleTopic('${topic.id}', event)">
                       ${isDone ? '✓' : ''}
                     </div>
@@ -220,7 +276,7 @@ function renderCurriculumView() {
                     </div>
                     <div class="topic-actions">
                       <button class="topic-notes-btn ${hasNote ? 'has-notes' : ''}" 
-                              title="${hasNote ? 'Ver/editar nota' : 'Añadir nota'}"
+                              title="${hasNote ? 'Ver/editar apunte' : 'Añadir apunte'}"
                               onclick="openNoteModal('${topic.id}', '${escapeQuotes(topic.title)}', event)">
                         ${hasNote ? '📝' : '✏️'}
                       </button>
@@ -236,7 +292,7 @@ function renderCurriculumView() {
 
     if (!query || hasMatchingTopics) {
       html += `
-        <div class="module-card" id="module-card-${module.id}" 
+        <div class="module-card ${isCollapsed ? 'collapsed' : ''} ${isCurrentModule ? 'is-current' : ''}" id="module-card-${module.id}" 
              style="--module-color-gradient: ${module.gradient}; --module-accent: ${module.color};">
           <div class="module-header" onclick="toggleCollapseModule('${module.id}')">
             <div class="module-header-left">
@@ -245,17 +301,17 @@ function renderCurriculumView() {
                 <h2>
                   <span class="module-roman">${module.number}</span>
                   <span>${module.title}</span>
+                  ${isCurrentModule ? `<span class="current-tag-badge">Actual</span>` : ''}
                 </h2>
                 <p>${module.subtitle}</p>
               </div>
             </div>
             <div class="module-header-right">
               <span class="module-progress-pill">${modCompleted}/${modTotal} (${modPercent}%)</span>
-              <span class="collapse-indicator" id="indicator-${module.id}">▾</span>
+              <span class="collapse-indicator">▾</span>
             </div>
           </div>
           <div class="module-body" id="body-${module.id}">
-            <div class="module-meta-desc">${module.description}</div>
             <div class="chapters-grid">
               ${chaptersHtml}
             </div>
@@ -269,49 +325,49 @@ function renderCurriculumView() {
   container.innerHTML = html;
 }
 
-// Renderizar Vista Camino Gamificado (Estilo Mapa de Duolingo)
+// Renderizar Vista Ruta Duolingo (Minimalista, limpia y vertical sin amontonamientos)
 function renderPathView() {
   const container = document.getElementById('main-content-view');
   if (!container) return;
 
-  let allChapters = [];
+  const current = getCurrentProgressPoint();
+
+  let html = `<div class="path-view-wrapper">`;
+
   MATH_CURRICULUM.forEach((mod) => {
+    html += `
+      <div class="path-section-block">
+        <div class="path-section-header" style="background: ${mod.gradient};">
+          <span>${mod.icon}</span>
+          <span>${mod.number}. ${mod.title}</span>
+        </div>
+        <div class="path-items-vertical-list">
+    `;
+
     mod.chapters.forEach((chap) => {
       const total = chap.topics.length;
       const completed = chap.topics.filter(t => STATE.completedTopics.has(t.id)).length;
-      allChapters.push({
-        module: mod,
-        chapter: chap,
-        total,
-        completed,
-        isDone: total > 0 && completed === total
-      });
+      const isDone = total > 0 && completed === total;
+      const isCurrentChapter = (chap.id === current.chapterId);
+
+      html += `
+        <div class="path-item-row ${isDone ? 'completed' : ''} ${isCurrentChapter ? 'active-now' : ''}" 
+             onclick="focusChapterInCurriculum('${mod.id}', '${chap.id}')">
+          <div class="path-circle-node">
+            ${isDone ? '✓' : (isCurrentChapter ? '▶' : '•')}
+          </div>
+          <div class="path-card-preview">
+            <div>
+              <div class="path-card-title">${chap.title}</div>
+              <div class="path-card-sub">${completed} de ${total} temas completados</div>
+            </div>
+            <span class="path-card-badge">${isDone ? 'Dominado' : (isCurrentChapter ? 'En curso' : 'Pendiente')}</span>
+          </div>
+        </div>
+      `;
     });
-  });
-
-  let html = `<div class="path-view-container">`;
-
-  allChapters.forEach((item, index) => {
-    // Efecto zig-zag suave de Duolingo
-    const offset = Math.sin(index * 0.8) * 60;
-    const isUnlocked = index === 0 || allChapters[index - 1].completed > 0;
-    const isCompleted = item.isDone;
 
     html += `
-      <div class="path-node-wrapper" style="transform: translateX(${offset}px)">
-        <button class="path-node-button ${isCompleted ? 'completed' : (!isUnlocked ? 'locked' : '')}"
-                style="background: ${isCompleted ? item.module.color : (!isUnlocked ? '' : item.module.color)};"
-                onclick="focusChapterInCurriculum('${item.module.id}', '${item.chapter.id}')">
-          ${isCompleted ? '⭐' : (isUnlocked ? item.module.icon : '🔒')}
-        </button>
-        ${index < allChapters.length - 1 ? `
-          <div class="path-connector-line ${isCompleted ? 'active' : ''}" style="${isCompleted ? `background: ${item.module.color}` : ''}"></div>
-        ` : ''}
-        <div class="path-node-title">
-          ${item.chapter.title}
-          <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: normal;">
-            ${item.completed} / ${item.total} temas
-          </div>
         </div>
       </div>
     `;
@@ -321,7 +377,6 @@ function renderPathView() {
   container.innerHTML = html;
 }
 
-// Cambiar estado de un tema (marcar / desmarcar)
 function toggleTopic(topicId, event) {
   if (event) event.stopPropagation();
 
@@ -338,7 +393,6 @@ function toggleTopic(topicId, event) {
   renderApp();
 }
 
-// Colapsar o expandir un módulo
 function toggleCollapseModule(moduleId) {
   const card = document.getElementById(`module-card-${moduleId}`);
   if (card) {
@@ -346,7 +400,6 @@ function toggleCollapseModule(moduleId) {
   }
 }
 
-// Enfocar un capítulo en la vista completa desde el camino Duolingo
 function focusChapterInCurriculum(moduleId, chapterId) {
   switchView('curriculum');
   setTimeout(() => {
@@ -354,14 +407,12 @@ function focusChapterInCurriculum(moduleId, chapterId) {
     if (card && card.classList.contains('collapsed')) {
       card.classList.remove('collapsed');
     }
-    const elem = document.getElementById(`module-card-${moduleId}`);
-    if (elem) {
-      elem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   }, 100);
 }
 
-// Cambiar de vista (Temario vs Camino)
 function switchView(viewName) {
   STATE.currentView = viewName;
   document.querySelectorAll('.view-btn').forEach(btn => {
@@ -370,7 +421,7 @@ function switchView(viewName) {
   renderApp();
 }
 
-// Modal de Notas
+// Modal de notas
 let currentActiveTopicId = null;
 
 function openNoteModal(topicId, topicTitle, event) {
@@ -409,21 +460,19 @@ function closeNoteModal() {
   currentActiveTopicId = null;
 }
 
-// Modal de Celebración / Confetti
 function showCelebrationConfetti() {
   if (typeof confetti === 'function') {
     confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.75 },
+      particleCount: 60,
+      spread: 60,
+      origin: { y: 0.8 },
       colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899']
     });
   }
 
-  // Comprobar si se completó el 100% o hitos
   const stats = calculateStats();
   if (stats.percentage === 100) {
-    openMilestoneModal("🎉 ¡TEMARIO COMPLETADO!", "¡Has dominado todos los temas matemáticos requeridos para Ciencias de la Computación! ¡Eres imparable!");
+    openMilestoneModal("🎉 ¡RUTA COMPLETADA!", "¡Has completado exitosamente todo el temario de matemáticas para Ciencias de la Computación!");
   }
 }
 
@@ -442,12 +491,10 @@ function closeCelebrationModal() {
   if (modal) modal.classList.remove('active');
 }
 
-// Exportar e Importar Progreso (JSON)
 function exportProgress() {
   const data = {
     completedTopics: [...STATE.completedTopics],
     topicNotes: STATE.topicNotes,
-    streak: STATE.streak,
     exportDate: new Date().toISOString()
   };
 
@@ -479,9 +526,6 @@ function importProgress() {
         if (data.topicNotes && typeof data.topicNotes === 'object') {
           STATE.topicNotes = data.topicNotes;
         }
-        if (data.streak) {
-          STATE.streak = data.streak;
-        }
         saveState();
         renderApp();
         alert('¡Progreso importado con éxito!');
@@ -496,7 +540,7 @@ function importProgress() {
 }
 
 function resetProgress() {
-  if (confirm('¿Estás seguro de que quieres reiniciar todo tu progreso? Esta acción no se puede deshacer.')) {
+  if (confirm('¿Reiniciar todo tu progreso de estudio?')) {
     STATE.completedTopics.clear();
     STATE.topicNotes = {};
     saveState();
@@ -504,7 +548,6 @@ function resetProgress() {
   }
 }
 
-// Event Listeners generales
 function setupEventListeners() {
   const themeBtn = document.getElementById('theme-toggle');
   if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
@@ -526,15 +569,14 @@ function setupEventListeners() {
   });
 }
 
-// PWA: Registro del Service Worker y banner de instalación
 let deferredPrompt = null;
 
 function initPWA() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
-        .then(reg => console.log('ServiceWorker registrado:', reg.scope))
-        .catch(err => console.log('Error en ServiceWorker:', err));
+        .then(reg => console.log('ServiceWorker activo:', reg.scope))
+        .catch(err => console.log('Error ServiceWorker:', err));
     });
   }
 
@@ -558,7 +600,6 @@ function installPWA() {
   });
 }
 
-// Helper para escapar comillas simples en atributos html
 function escapeQuotes(str) {
   return str.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 }

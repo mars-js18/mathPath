@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon" href="./icons/icon-192.png">
   <link rel="manifest" href="./manifest.json">
 
-  <!-- Google Font: Outfit (Estilo Duolingo moderno, limpio y amigable) -->
+  <!-- Google Font: Outfit (Limpio, moderno y legible) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -38,27 +38,23 @@
         </div>
       </div>
 
-      <!-- Duolingo style stats -->
+      <!-- Stats sin rachas: XP y Nivel -->
       <div class="header-stats">
-        <div class="stat-chip streak" title="Racha de estudio diario">
-          <span>🔥</span>
-          <span id="stat-streak">1 d</span>
-        </div>
         <div class="stat-chip xp" title="Puntos de experiencia ganados">
           <span>⚡</span>
           <span id="stat-xp">0 XP</span>
         </div>
-        <div class="stat-chip level" title="Nivel alcanzado">
+        <div class="stat-chip level" title="Nivel actual">
           <span>👑</span>
           <span id="stat-level">Nvl 1</span>
         </div>
       </div>
 
-      <!-- Action buttons -->
+      <!-- Acciones de cabecera -->
       <div class="header-actions">
         <button class="icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro">☀️</button>
-        <button class="icon-btn" onclick="exportProgress()" title="Exportar respaldo de progreso">💾</button>
-        <button class="icon-btn" onclick="importProgress()" title="Importar respaldo de progreso">📂</button>
+        <button class="icon-btn" onclick="exportProgress()" title="Exportar respaldo JSON">💾</button>
+        <button class="icon-btn" onclick="importProgress()" title="Importar respaldo JSON">📂</button>
       </div>
     </div>
   </header>
@@ -66,63 +62,69 @@
   <!-- MAIN VIEW CONTAINER -->
   <main class="app-main">
 
-    <!-- HERO PROGRESS CARD (Khan Academy style overview) -->
-    <section class="hero-card">
-      <div class="hero-info">
-        <h2 class="hero-title" id="hero-percentage">0% Completado</h2>
-        <p class="hero-desc">
-          Ruta estructurada y optimizada para Ciencias de la Computación: Aritmética, Álgebra, Geometría & Trigonometría, Geometría Analítica, Cálculo Diferencial, Cálculo Integral y Módulos CS Esenciales.
-        </p>
-        <div class="overall-progress-box">
-          <div class="progress-header-info">
-            <span id="hero-topic-count">0 de 100 temas dominados</span>
-            <span style="color: var(--duo-green);">¡A por el siguiente nivel!</span>
-          </div>
-          <div class="progress-track">
-            <div class="progress-fill" id="hero-progress-fill" style="width: 0%;"></div>
-          </div>
+    <!-- PROGRESO DISCRETO SUPERIOR -->
+    <section class="discrete-progress-container">
+      <div class="progress-top-row">
+        <div class="progress-label-compact">
+          <span>📈</span>
+          <span>Progreso General</span>
+          <span id="compact-count" style="color: var(--text-muted); font-size: 0.78rem;">(0/100 temas)</span>
         </div>
+        <div class="progress-percent-compact" id="compact-percentage">0%</div>
       </div>
-
-      <div class="hero-badge-container">
-        <div class="trophy-disc">🏆</div>
-        <span style="font-weight: 800; font-size: 0.85rem; color: var(--duo-gold);">DOMINIO MATEMÁTICO</span>
+      <div class="mini-progress-track">
+        <div class="mini-progress-fill" id="compact-fill" style="width: 0%;"></div>
       </div>
     </section>
 
-    <!-- CONTROLS & VIEWS TOGGLE -->
+    <!-- ACCESO DIRECTO DINÁMICO: DONDE VOY -->
+    <section class="current-focus-banner" id="focus-banner" onclick="jumpToCurrentTopic()">
+      <div class="current-focus-left">
+        <div class="focus-beacon"></div>
+        <div class="focus-text-details">
+          <div class="focus-tag">📍 Continuar aprendiendo:</div>
+          <div class="focus-title" id="focus-topic-name">Cargando...</div>
+        </div>
+      </div>
+      <button class="focus-jump-btn">
+        <span>Ir ahora</span>
+        <span>➔</span>
+      </button>
+    </section>
+
+    <!-- CONTROLES Y SELECTOR DE VISTAS -->
     <section class="controls-bar">
       <div class="search-wrapper">
         <span class="search-icon">🔍</span>
-        <input type="text" id="search-topics" class="search-input" placeholder="Buscar temas, fórmulas, teoremas...">
+        <input type="text" id="search-topics" class="search-input" placeholder="Buscar temas, definiciones, teoremas...">
       </div>
 
       <div class="view-pills">
         <button class="view-btn active" data-view="curriculum">
-          <span>📋</span> Temario Completo
+          <span>📋</span> Temario
         </button>
         <button class="view-btn" data-view="path">
-          <span>🗺️</span> Camino Duolingo
+          <span>🗺️</span> Ruta
         </button>
       </div>
     </section>
 
-    <!-- DYNAMIC INJECTED CURRICULUM OR PATH VIEW -->
+    <!-- CONTENEDOR PRINCIPAL INYECTADO DINÁMICAMENTE -->
     <div id="main-content-view">
-      <!-- Generado dinámicamente por app.js -->
+      <!-- Generado por app.js -->
     </div>
 
   </main>
 
-  <!-- NOTE MODAL (Para apuntes personales en cada tema) -->
+  <!-- MODAL DE APUNTES -->
   <div class="modal-overlay" id="note-modal">
     <div class="modal-content">
       <h3 class="modal-title" id="note-modal-title">Apuntes del tema</h3>
-      <p class="modal-text">Escribe fórmulas clave, recordatorios o dudas que quieras repasar más tarde.</p>
-      <textarea id="note-textarea" class="note-textarea" placeholder="Ejemplo: Recordar que la regla de De Morgan niega los conectores lógicos..."></textarea>
+      <p class="modal-text">Escribe fórmulas clave, teoremas o notas para repasar más tarde.</p>
+      <textarea id="note-textarea" class="note-textarea" placeholder="Ejemplo: Notación o detalles a recordar..."></textarea>
       <div class="modal-actions-row">
         <button class="btn-secondary" onclick="closeNoteModal()">Cancelar</button>
-        <button class="btn-primary" onclick="saveNote()">Guardar Apunte</button>
+        <button class="btn-primary" onclick="saveNote()">Guardar</button>
       </div>
     </div>
   </div>
@@ -130,10 +132,10 @@
   <!-- CELEBRATION MODAL -->
   <div class="modal-overlay" id="celebration-modal">
     <div class="modal-content">
-      <div class="modal-icon-badge">🏆</div>
+      <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
       <h3 class="modal-title" id="celebration-title">¡Objetivo Desbloqueado!</h3>
-      <p class="modal-text" id="celebration-desc">Felicidades por seguir firme en tu aprendizaje de matemáticas.</p>
-      <button class="modal-close-btn" onclick="closeCelebrationModal()">¡Continuar Aprendiendo!</button>
+      <p class="modal-text" id="celebration-desc">Felicidades por seguir avanzando en tu ruta de matemáticas.</p>
+      <button class="modal-close-btn" onclick="closeCelebrationModal()">Continuar</button>
     </div>
   </div>
 
@@ -141,18 +143,18 @@
   <div class="install-prompt-banner" id="install-banner" style="display: none;">
     <div>
       <div style="font-weight: 800; font-size: 0.95rem;">📲 Instalar MathMaster PWA</div>
-      <div style="font-size: 0.8rem; color: var(--text-muted);">Accede al temario sin internet directo en tu teléfono o PC</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Accede al temario offline en tu dispositivo</div>
     </div>
     <button class="install-banner-btn" onclick="installPWA()">Instalar</button>
   </div>
 
   <!-- FOOTER -->
   <footer class="app-footer">
-    <p>MathMaster PWA • Diseñado con el espíritu de Duolingo & Khan Academy</p>
+    <p>MathMaster PWA • Ruta Matemática para Ciencias de la Computación</p>
     <div class="footer-links">
       <button class="footer-btn" onclick="exportProgress()">📥 Exportar Datos</button>
       <button class="footer-btn" onclick="importProgress()">📤 Importar Datos</button>
-      <button class="footer-btn" onclick="resetProgress()" style="color: #ef4444;">🔄 Reiniciar Todo</button>
+      <button class="footer-btn" onclick="resetProgress()" style="color: #ef4444;">🔄 Reiniciar</button>
     </div>
   </footer>
 
