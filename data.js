@@ -1,15 +1,19 @@
 /**
- * MathMaster - Estructura de Datos del Temario Curado y Ordenado Pedagógicamente
- * Orden de aprendizaje optimizado para Ciencias de la Computación:
- * 1. Aritmética (Cimientos)
- * 2. Álgebra (Lenguaje central)
- * 3. Álgebra Lineal Aplicada (Lay) [Justo después de Álgebra para asimilar vectores y matrices]
- * 4. Matemáticas Discretas (Rosen) [Estructuras de datos y lógica algorítmica]
- * 5. Geometría y Trigonometría (Bases visuales)
- * 6. Geometría Analítica (Coordenadas y curvas 2D)
- * 7. Cálculo Diferencial (Cambio y optimización)
- * 8. Cálculo Integral (Acumulación y áreas)
- * 9. Probabilidad y Estadística (Devore) [Bases de Machine Learning e inferencia]
+ * MathMaster - Estructura de Datos del Temario Curado y Ordenado
+ *
+ * ORDEN ESTRATÉGICO EXACTO PARA CIENCIAS DE LA COMPUTACIÓN:
+ * 1. I. Aritmética (Cimientos desde cero hasta binario/hexadecimal)
+ * 2. II. Álgebra (Lógica, conjuntos, polinomios, matrices básicas)
+ * 3. III. Matemáticas Discretas (Kenneth H. Rosen)
+ *       -> Justo después de Álgebra. No requiere cálculo; bases de algoritmos, grafos y lógica computacional.
+ * 4. IV. Geometría y Trigonometría (Bases visuales y trigonometría para gráficos)
+ * 5. V. Geometría Analítica (Coordenadas, rectas, distancias, polares y paramétricas)
+ * 6. VI. Cálculo Diferencial (Razón de cambio, optimización y L'Hôpital)
+ * 7. VII. Cálculo Integral (Sumas de Riemann, integrales analíticas y áreas bajo la curva)
+ * 8. VIII. Álgebra Lineal (David C. Lay)
+ *       -> Después de Cálculo y Geometría Analítica: manipulación del espacio multidimensional y transformaciones.
+ * 9. IX. Probabilidad y Estadística (Jay L. Devore)
+ *       -> Al final de todo: combina el conteo discreto (Rosen) con integrales para variables continuas y ML.
  */
 
 const MATH_CURRICULUM = [
@@ -17,8 +21,8 @@ const MATH_CURRICULUM = [
     id: "aritmetica",
     number: "I",
     title: "Aritmética",
-    subtitle: "Cimientos numéricos y sistemas de numeración",
-    color: "#10b981", // Emerald Green
+    subtitle: "Cimientos numéricos y sistemas computacionales",
+    color: "#10b981", // Emerald
     gradient: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
     icon: "🧮",
     chapters: [
@@ -124,7 +128,7 @@ const MATH_CURRICULUM = [
       {
         id: "ari-cap-9",
         title: "Capítulo 9: Sistemas de numeración computacional",
-        note: "Omitidos sistemas antiguos; enfocado en bases informáticas.",
+        note: "Optimizado para CS: conversiones entre binario, octal, hex y base 10.",
         topics: [
           { id: "ari-9-1", title: "Bases posicionales y notación polinómica" },
           { id: "ari-9-2", title: "Conversión de base B a base 10 (N(B) → N(10))" },
@@ -160,7 +164,7 @@ const MATH_CURRICULUM = [
     number: "II",
     title: "Álgebra",
     subtitle: "El lenguaje de la programación y estructuras algebraicas",
-    color: "#3b82f6", // Royal Blue
+    color: "#3b82f6", // Blue
     gradient: "linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)",
     icon: "📐",
     chapters: [
@@ -341,64 +345,8 @@ const MATH_CURRICULUM = [
     ]
   },
   {
-    id: "algebra-lineal-lay",
-    number: "III",
-    title: "Álgebra Lineal Aplicada",
-    subtitle: "Vectores, matrices y transformaciones (David C. Lay)",
-    color: "#6366f1", // Indigo
-    gradient: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
-    icon: "🧭",
-    chapters: [
-      {
-        id: "lay-cap-1",
-        title: "Capítulo 1: Sistemas de ecuaciones lineales (Repaso avanzado)",
-        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
-        topics: [
-          { id: "lay-1-1", title: "Ecuaciones lineales y notación matricial avanzada" },
-          { id: "lay-1-2", title: "Reducción por filas y formas escalonadas" },
-          { id: "lay-1-3", title: "Conjuntos solución de sistemas lineales" },
-          { id: "lay-1-4", title: "Existencia y unicidad de soluciones en modelos matriciales" }
-        ]
-      },
-      {
-        id: "lay-cap-2",
-        title: "Capítulo 2: Ecuaciones vectoriales y matriciales",
-        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
-        topics: [
-          { id: "lay-2-1", title: "Vectores en ℝ² y ℝⁿ: combinaciones lineales" },
-          { id: "lay-2-2", title: "El espacio generado Span{v1, ..., vp}" },
-          { id: "lay-2-3", title: "La ecuación matricial Ax = b" },
-          { id: "lay-2-4", title: "Independencia lineal y dependencia en conjuntos de vectores" }
-        ]
-      },
-      {
-        id: "lay-cap-3",
-        title: "Capítulo 3: Transformaciones lineales",
-        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
-        topics: [
-          { id: "lay-3-1", title: "Introducción a transformaciones lineales: T(u + v) y T(cu)" },
-          { id: "lay-3-2", title: "La matriz de una transformación lineal" },
-          { id: "lay-3-3", title: "Transformaciones geométricas en ℝ²: escalado, rotación, reflexión y corte (shear)" },
-          { id: "lay-3-4", title: "Inyectividad (uno a uno) y sobreyectividad de transformaciones lineales" }
-        ]
-      },
-      {
-        id: "lay-cap-4",
-        title: "Capítulo 4: Vectores propios y valores propios (Eigen)",
-        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
-        note: "Solo la introducción esencial para CS / Machine Learning.",
-        topics: [
-          { id: "lay-4-1", title: "Definición conceptual: Ax = λx (Eigenvalues y Eigenvectors)" },
-          { id: "lay-4-2", title: "La ecuación característica det(A - λI) = 0" },
-          { id: "lay-4-3", title: "Espacios propios (Eigenspaces) y bases asociadas" },
-          { id: "lay-4-4", title: "Interpretación geométrica e intuición en reducción dimensional (PCA)" }
-        ]
-      }
-    ]
-  },
-  {
     id: "matematicas-discretas-rosen",
-    number: "IV",
+    number: "III",
     title: "Matemáticas Discretas",
     subtitle: "Estructuras de datos, grafos y algoritmos (Kenneth H. Rosen)",
     color: "#0284c7", // Sky Blue Dark
@@ -468,7 +416,7 @@ const MATH_CURRICULUM = [
   },
   {
     id: "geometria-trigonometria",
-    number: "V",
+    number: "IV",
     title: "Geometría y Trigonometría",
     subtitle: "Bases visuales para gráficos por computadora y vectores",
     color: "#f59e0b", // Amber
@@ -572,7 +520,7 @@ const MATH_CURRICULUM = [
   },
   {
     id: "geometria-analitica",
-    number: "VI",
+    number: "V",
     title: "Geometría Analítica",
     subtitle: "Coordenadas, rectas y trayectorias espaciales",
     color: "#8b5cf6", // Purple
@@ -624,7 +572,7 @@ const MATH_CURRICULUM = [
   },
   {
     id: "calculo-diferencial",
-    number: "VII",
+    number: "VI",
     title: "Cálculo Diferencial",
     subtitle: "Razón de cambio, optimización y bases de gradiente",
     color: "#ef4444", // Red
@@ -683,7 +631,7 @@ const MATH_CURRICULUM = [
   },
   {
     id: "calculo-integral",
-    number: "VIII",
+    number: "VII",
     title: "Cálculo Integral",
     subtitle: "Acumulación, integrales analíticas y áreas",
     color: "#06b6d4", // Cyan
@@ -728,6 +676,62 @@ const MATH_CURRICULUM = [
           { id: "ci-6-1", title: "Definición, orden y grado de ecuaciones diferenciales" },
           { id: "ci-6-2", title: "Ecuaciones diferenciales por variables separables" },
           { id: "ci-6-3", title: "Modelos exponenciales de cambio" }
+        ]
+      }
+    ]
+  },
+  {
+    id: "algebra-lineal-lay",
+    number: "VIII",
+    title: "Álgebra Lineal",
+    subtitle: "Vectores, matrices y espacios multidimensionales (David C. Lay)",
+    color: "#6366f1", // Indigo
+    gradient: "linear-gradient(135deg, #6366f1 0%, #4338ca 100%)",
+    icon: "🧭",
+    chapters: [
+      {
+        id: "lay-cap-1",
+        title: "Capítulo 1: Sistemas de ecuaciones lineales (Repaso avanzado)",
+        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
+        topics: [
+          { id: "lay-1-1", title: "Ecuaciones lineales y notación matricial avanzada" },
+          { id: "lay-1-2", title: "Reducción por filas y formas escalonadas" },
+          { id: "lay-1-3", title: "Conjuntos solución de sistemas lineales" },
+          { id: "lay-1-4", title: "Existencia y unicidad de soluciones en modelos matriciales" }
+        ]
+      },
+      {
+        id: "lay-cap-2",
+        title: "Capítulo 2: Ecuaciones vectoriales y matriciales",
+        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
+        topics: [
+          { id: "lay-2-1", title: "Vectores en ℝ² y ℝⁿ: combinaciones lineales" },
+          { id: "lay-2-2", title: "El espacio generado Span{v1, ..., vp}" },
+          { id: "lay-2-3", title: "La ecuación matricial Ax = b" },
+          { id: "lay-2-4", title: "Independencia lineal y dependencia en conjuntos de vectores" }
+        ]
+      },
+      {
+        id: "lay-cap-3",
+        title: "Capítulo 3: Transformaciones lineales",
+        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
+        topics: [
+          { id: "lay-3-1", title: "Introducción a transformaciones lineales: T(u + v) y T(cu)" },
+          { id: "lay-3-2", title: "La matriz de una transformación lineal" },
+          { id: "lay-3-3", title: "Transformaciones geométricas en ℝ²: escalado, rotación, reflexión y corte (shear)" },
+          { id: "lay-3-4", title: "Inyectividad (uno a uno) y sobreyectividad de transformaciones lineales" }
+        ]
+      },
+      {
+        id: "lay-cap-4",
+        title: "Capítulo 4: Vectores propios y valores propios (Eigen)",
+        bibliography: "Álgebra Lineal y sus Aplicaciones (David C. Lay)",
+        note: "Solo la introducción esencial para CS / Machine Learning.",
+        topics: [
+          { id: "lay-4-1", title: "Definición conceptual: Ax = λx (Eigenvalues y Eigenvectors)" },
+          { id: "lay-4-2", title: "La ecuación característica det(A - λI) = 0" },
+          { id: "lay-4-3", title: "Espacios propios (Eigenspaces) y bases asociadas" },
+          { id: "lay-4-4", title: "Interpretación geométrica e intuición en reducción dimensional (PCA)" }
         ]
       }
     ]

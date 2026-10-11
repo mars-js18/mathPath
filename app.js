@@ -1,10 +1,11 @@
 /**
  * MathMaster - Lógica de la Aplicación PWA
- * - Sin rachas (simplificado y libre de presión)
- * - Módulos replegados por defecto, desplegando únicamente el módulo activo donde te encuentras
- * - Acceso directo superior con botón "Ir ahora" al primer tema pendiente
- * - Ruta estilo Duolingo minimalista y ordenada verticalmente (sin amontonamientos)
- * - Persistencia local y soporte offline PWA
+ * - Todos los módulos aparecen replegados al inicio (ninguno se auto-despliega solo).
+ * - "Continuar aprendiendo": salto directo y apertura automática del módulo al hacer clic en "Ir ahora".
+ * - Título sin desbordamiento (truncado con puntos suspensivos y adaptable a pantallas de celular).
+ * - Buscador integrado con botón de lupa en la barra superior.
+ * - Pestaña/Modal de ajustes separada para exportar, importar y cambiar tema.
+ * - Registro PWA y manejo de caché v3.
  */
 
 const STATE = {
@@ -12,7 +13,8 @@ const STATE = {
   topicNotes: {},
   currentView: 'curriculum', // 'curriculum' | 'path'
   searchQuery: '',
-  theme: 'dark'
+  theme: 'dark',
+  manuallyExpandedModules: new Set() // Control de módulos abiertos manualmente
 };
 
 const XP_PER_TOPIC = 15;
@@ -58,9 +60,9 @@ function saveState() {
 
 function initTheme() {
   document.documentElement.setAttribute('data-theme', STATE.theme);
-  const themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) {
-    themeBtn.textContent = STATE.theme === 'dark' ? '☀️' : '🌙';
+  const themeLabel = document.getElementById('settings-theme-label');
+  if (themeLabel) {
+    themeLabel.textContent = STATE.theme === 'dark' ? '☀️ Modo Claro' : '🌙 Modo Oscuro';
   }
 }
 
@@ -93,7 +95,7 @@ function calculateStats() {
   };
 }
 
-// Detectar cuál es el tema actual en el que vas (el primer tema no completado)
+// Detectar punto actual de progreso (primer tema pendiente)
 function getCurrentProgressPoint() {
   for (const module of MATH_CURRICULUM) {
     for (const chapter of module.chapters) {
@@ -113,7 +115,6 @@ function getCurrentProgressPoint() {
     }
   }
 
-  // Si completó todos
   const lastMod = MATH_CURRICULUM[MATH_CURRICULUM.length - 1];
   const lastChap = lastMod.chapters[lastMod.chapters.length - 1];
   const lastTopic = lastChap.topics[lastChap.topics.length - 1];
@@ -123,15 +124,13 @@ function getCurrentProgressPoint() {
     chapterId: lastChap.id,
     chapterTitle: lastChap.title,
     topicId: lastTopic.id,
-    topicTitle: "¡Felicidades! Has completado toda la ruta matemática",
+    topicTitle: "¡Felicidades! Toda la ruta completada",
     isAllCompleted: true
   };
 }
 
-// Renderizado principal
 function renderApp() {
-  updateHeaderStats();
-  renderDiscreteProgress();
+  renderInspiringProgress();
   renderFocusBanner();
 
   if (STATE.currentView === 'curriculum') {
@@ -141,28 +140,21 @@ function renderApp() {
   }
 }
 
-function updateHeaderStats() {
+// Barra de progreso visualmente atractiva y motivadora
+function renderInspiringProgress() {
   const stats = calculateStats();
-  const xpEl = document.getElementById('stat-xp');
-  const levelEl = document.getElementById('stat-level');
-
-  if (xpEl) xpEl.textContent = `${stats.totalXp} XP`;
-  if (levelEl) levelEl.textContent = `Nvl ${stats.level}`;
-}
-
-// Barra de progreso discreta arriba
-function renderDiscreteProgress() {
-  const stats = calculateStats();
-  const fillEl = document.getElementById('compact-fill');
-  const percentEl = document.getElementById('compact-percentage');
-  const countEl = document.getElementById('compact-count');
+  const fillEl = document.getElementById('hero-progress-fill');
+  const percentEl = document.getElementById('hero-progress-percent');
+  const subEl = document.getElementById('hero-progress-sub');
+  const xpEl = document.getElementById('hero-progress-xp');
 
   if (fillEl) fillEl.style.width = `${stats.percentage}%`;
   if (percentEl) percentEl.textContent = `${stats.percentage}%`;
-  if (countEl) countEl.textContent = `(${stats.completedCount} de ${stats.totalTopics} temas)`;
+  if (subEl) subEl.textContent = `${stats.completedCount} de ${stats.totalTopics} temas dominados`;
+  if (xpEl) xpEl.textContent = `${stats.totalXp} XP • Nvl ${stats.level}`;
 }
 
-// Banner de acceso directo superior "Donde voy"
+// Banner de acceso directo "Continuar aprendiendo"
 function renderFocusBanner() {
   const current = getCurrentProgressPoint();
   const titleEl = document.getElementById('focus-topic-name');
@@ -170,28 +162,33 @@ function renderFocusBanner() {
     if (current.isAllCompleted) {
       titleEl.textContent = current.topicTitle;
     } else {
-      titleEl.innerHTML = `<strong>${current.moduleTitle}</strong> ➔ ${current.topicTitle}`;
+      titleEl.textContent = `${current.moduleTitle} ➔ ${current.topicTitle}`;
     }
   }
 }
 
-// Acción de saltar directo al tema en el que voy
-function jumpToCurrentTopic() {
+// Acción: Saltar directamente al tema en curso y abrirlo
+function jumpToCurrentTopic(e) {
+  if (e) e.stopPropagation();
   const current = getCurrentProgressPoint();
   if (current.isAllCompleted) return;
 
+  // Cambiar a vista temario si estamos en ruta
   if (STATE.currentView !== 'curriculum') {
     switchView('curriculum');
   }
 
-  setTimeout(() => {
-    // Abrir el módulo
-    const card = document.getElementById(`module-card-${current.moduleId}`);
-    if (card && card.classList.contains('collapsed')) {
-      card.classList.remove('collapsed');
-    }
+  // Registrar que este módulo debe estar abierto
+  STATE.manuallyExpandedModules.add(current.moduleId);
 
-    // Scroll al tema exacto y animación
+  // Asegurar que el card esté desplegado
+  const card = document.getElementById(`module-card-${current.moduleId}`);
+  if (card) {
+    card.classList.remove('collapsed');
+  }
+
+  // Desplazar y resaltar con animación visible
+  setTimeout(() => {
     const topicEl = document.querySelector(`[data-topic-id="${current.topicId}"]`);
     if (topicEl) {
       topicEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -202,11 +199,10 @@ function jumpToCurrentTopic() {
     } else if (card) {
       card.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, 100);
+  }, 120);
 }
 
-// Renderizar Vista Temario Completo
-// REGLA SOLICITADA: Todos los módulos replegados (collapsed) excepto en el que estás actualmente
+// REGLA: TODOS los módulos aparecen replegados al inicio a menos que el usuario los abra manualmente o haya búsqueda activa
 function renderCurriculumView() {
   const container = document.getElementById('main-content-view');
   if (!container) return;
@@ -229,8 +225,13 @@ function renderCurriculumView() {
     const modPercent = modTotal > 0 ? Math.round((modCompleted / modTotal) * 100) : 0;
     const isCurrentModule = (module.id === current.moduleId);
 
-    // Solo se expande si es el módulo actual o si hay una búsqueda activa
-    const isCollapsed = query ? false : !isCurrentModule;
+    // Replegado por defecto SIEMPRE, a menos que el usuario lo haya abierto manualmente o haya búsqueda
+    let isCollapsed = true;
+    if (query) {
+      isCollapsed = false;
+    } else if (STATE.manuallyExpandedModules.has(module.id)) {
+      isCollapsed = false;
+    }
 
     let chaptersHtml = '';
     let hasMatchingTopics = false;
@@ -301,7 +302,6 @@ function renderCurriculumView() {
                 <h2>
                   <span class="module-roman">${module.number}</span>
                   <span>${module.title}</span>
-                  ${isCurrentModule ? `<span class="current-tag-badge">Actual</span>` : ''}
                 </h2>
                 <p>${module.subtitle}</p>
               </div>
@@ -325,7 +325,20 @@ function renderCurriculumView() {
   container.innerHTML = html;
 }
 
-// Renderizar Vista Ruta Duolingo (Minimalista, limpia y vertical sin amontonamientos)
+// Alternar colapsado de módulo
+function toggleCollapseModule(moduleId) {
+  const card = document.getElementById(`module-card-${moduleId}`);
+  if (card) {
+    const isNowCollapsed = card.classList.toggle('collapsed');
+    if (isNowCollapsed) {
+      STATE.manuallyExpandedModules.delete(moduleId);
+    } else {
+      STATE.manuallyExpandedModules.add(moduleId);
+    }
+  }
+}
+
+// Vista Ruta Vertical Limpia
 function renderPathView() {
   const container = document.getElementById('main-content-view');
   if (!container) return;
@@ -357,7 +370,7 @@ function renderPathView() {
             ${isDone ? '✓' : (isCurrentChapter ? '▶' : '•')}
           </div>
           <div class="path-card-preview">
-            <div>
+            <div style="min-width: 0; flex: 1;">
               <div class="path-card-title">${chap.title}</div>
               <div class="path-card-sub">${completed} de ${total} temas completados</div>
             </div>
@@ -377,6 +390,26 @@ function renderPathView() {
   container.innerHTML = html;
 }
 
+function focusChapterInCurriculum(moduleId, chapterId) {
+  switchView('curriculum');
+  STATE.manuallyExpandedModules.add(moduleId);
+  setTimeout(() => {
+    const card = document.getElementById(`module-card-${moduleId}`);
+    if (card) {
+      card.classList.remove('collapsed');
+      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, 100);
+}
+
+function switchView(viewName) {
+  STATE.currentView = viewName;
+  document.querySelectorAll('.view-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === viewName);
+  });
+  renderApp();
+}
+
 function toggleTopic(topicId, event) {
   if (event) event.stopPropagation();
 
@@ -393,32 +426,32 @@ function toggleTopic(topicId, event) {
   renderApp();
 }
 
-function toggleCollapseModule(moduleId) {
-  const card = document.getElementById(`module-card-${moduleId}`);
-  if (card) {
-    card.classList.toggle('collapsed');
+// Barra de búsqueda con la lupa
+function toggleSearchBar() {
+  const container = document.getElementById('search-bar-container');
+  const input = document.getElementById('search-topics');
+  if (container) {
+    const isActive = container.classList.toggle('active');
+    if (isActive && input) {
+      input.focus();
+    } else if (!isActive && input) {
+      input.value = '';
+      STATE.searchQuery = '';
+      if (STATE.currentView === 'curriculum') renderCurriculumView();
+    }
   }
 }
 
-function focusChapterInCurriculum(moduleId, chapterId) {
-  switchView('curriculum');
-  setTimeout(() => {
-    const card = document.getElementById(`module-card-${moduleId}`);
-    if (card && card.classList.contains('collapsed')) {
-      card.classList.remove('collapsed');
-    }
-    if (card) {
-      card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, 100);
+// Modal de ajustes
+function openSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  initTheme();
+  if (modal) modal.classList.add('active');
 }
 
-function switchView(viewName) {
-  STATE.currentView = viewName;
-  document.querySelectorAll('.view-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.view === viewName);
-  });
-  renderApp();
+function closeSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  if (modal) modal.classList.remove('active');
 }
 
 // Modal de notas
@@ -463,7 +496,7 @@ function closeNoteModal() {
 function showCelebrationConfetti() {
   if (typeof confetti === 'function') {
     confetti({
-      particleCount: 60,
+      particleCount: 50,
       spread: 60,
       origin: { y: 0.8 },
       colors: ['#10b981', '#3b82f6', '#f59e0b', '#ec4899']
@@ -472,7 +505,7 @@ function showCelebrationConfetti() {
 
   const stats = calculateStats();
   if (stats.percentage === 100) {
-    openMilestoneModal("🎉 ¡RUTA COMPLETADA!", "¡Has completado exitosamente todo el temario de matemáticas para Ciencias de la Computación!");
+    openMilestoneModal("🎉 ¡RUTA COMPLETADA!", "¡Has dominado todo el temario de matemáticas para Ciencias de la Computación!");
   }
 }
 
@@ -543,15 +576,13 @@ function resetProgress() {
   if (confirm('¿Reiniciar todo tu progreso de estudio?')) {
     STATE.completedTopics.clear();
     STATE.topicNotes = {};
+    STATE.manuallyExpandedModules.clear();
     saveState();
     renderApp();
   }
 }
 
 function setupEventListeners() {
-  const themeBtn = document.getElementById('theme-toggle');
-  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
-
   const searchInput = document.getElementById('search-topics');
   if (searchInput) {
     searchInput.addEventListener('input', (e) => {
@@ -569,34 +600,25 @@ function setupEventListeners() {
   });
 }
 
-let deferredPrompt = null;
-
 function initPWA() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')
         .then(reg => {
           console.log('ServiceWorker activo:', reg.scope);
-
-          // Forzar chequeo de actualización inmediata en cada apertura
           reg.update();
 
-          // Si hay un nuevo service worker esperando o instalándose
           reg.addEventListener('updatefound', () => {
             const newWorker = reg.installing;
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // Notificar al usuario o recargar suavemente
-                if (confirm('✨ Hay una nueva versión disponible. ¿Actualizar ahora?')) {
-                  window.location.reload();
-                }
+                window.location.reload();
               }
             });
           });
         })
         .catch(err => console.log('Error ServiceWorker:', err));
 
-      // Si el controlador del ServiceWorker cambia, recargar para ver la nueva versión
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) {
@@ -606,25 +628,6 @@ function initPWA() {
       });
     });
   }
-
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const banner = document.getElementById('install-banner');
-    if (banner) banner.style.display = 'flex';
-  });
-}
-
-function installPWA() {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  deferredPrompt.userChoice.then((choice) => {
-    if (choice.outcome === 'accepted') {
-      const banner = document.getElementById('install-banner');
-      if (banner) banner.style.display = 'none';
-    }
-    deferredPrompt = null;
-  });
 }
 
 function escapeQuotes(str) {

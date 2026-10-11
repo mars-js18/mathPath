@@ -23,11 +23,11 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <!-- Stylesheet con versioning -->
-  <link rel="stylesheet" href="./style.css?v=2.0">
+  <link rel="stylesheet" href="./style.css?v=3.0">
 </head>
 <body>
 
-  <!-- NAVBAR HEADER -->
+  <!-- NAVBAR HEADER: SOLO MARCA, LUPA Y MENÚ AJUSTES -->
   <header class="app-header">
     <div class="header-inner">
       <div class="brand" onclick="switchView('curriculum')">
@@ -38,67 +38,59 @@
         </div>
       </div>
 
-      <!-- Stats sin rachas: XP y Nivel -->
-      <div class="header-stats">
-        <div class="stat-chip xp" title="Puntos de experiencia ganados">
-          <span>⚡</span>
-          <span id="stat-xp">0 XP</span>
-        </div>
-        <div class="stat-chip level" title="Nivel actual">
-          <span>👑</span>
-          <span id="stat-level">Nvl 1</span>
-        </div>
-      </div>
-
-      <!-- Acciones de cabecera -->
+      <!-- Acciones mínimas: Lupa de búsqueda y pestaña de Ajustes -->
       <div class="header-actions">
-        <button class="icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro">☀️</button>
-        <button class="icon-btn" onclick="exportProgress()" title="Exportar respaldo JSON">💾</button>
-        <button class="icon-btn" onclick="importProgress()" title="Importar respaldo JSON">📂</button>
+        <button class="icon-btn" id="search-toggle-btn" title="Buscar temas" onclick="toggleSearchBar()">🔍</button>
+        <button class="icon-btn" title="Ajustes y opciones" onclick="openSettingsModal()">⚙️</button>
       </div>
     </div>
   </header>
 
+  <!-- BARRA DE BÚSQUEDA FLOTANTE DESPLEGABLE CON LA LUPA -->
+  <div class="search-bar-modal" id="search-bar-container">
+    <div class="search-input-box">
+      <input type="text" id="search-topics" class="search-field" placeholder="Buscar fórmulas, teoremas, grafos, derivadas...">
+      <button class="search-close-btn" onclick="toggleSearchBar()">✕</button>
+    </div>
+  </div>
+
   <!-- MAIN VIEW CONTAINER -->
   <main class="app-main">
 
-    <!-- PROGRESO DISCRETO SUPERIOR -->
-    <section class="discrete-progress-container">
-      <div class="progress-top-row">
-        <div class="progress-label-compact">
-          <span>📈</span>
-          <span>Progreso General</span>
-          <span id="compact-count" style="color: var(--text-muted); font-size: 0.78rem;">(0/100 temas)</span>
+    <!-- TARJETA DE PROGRESO VISTOSA Y MOTIVADORA -->
+    <section class="hero-progress-banner">
+      <div class="progress-header-grid">
+        <div class="progress-title-block">
+          <h2><span>⚡</span> Mi Progreso de Estudio</h2>
+          <div class="progress-subtitle" id="hero-progress-sub">0 de 100 temas dominados</div>
         </div>
-        <div class="progress-percent-compact" id="compact-percentage">0%</div>
+        <div class="progress-number-block">
+          <div class="progress-large-percent" id="hero-progress-percent">0%</div>
+          <div class="progress-xp-badge" id="hero-progress-xp">0 XP • Nvl 1</div>
+        </div>
       </div>
-      <div class="mini-progress-track">
-        <div class="mini-progress-fill" id="compact-fill" style="width: 0%;"></div>
+      <div class="vibrant-progress-track">
+        <div class="vibrant-progress-fill" id="hero-progress-fill" style="width: 0%;"></div>
       </div>
     </section>
 
-    <!-- ACCESO DIRECTO DINÁMICO: DONDE VOY -->
-    <section class="current-focus-banner" id="focus-banner" onclick="jumpToCurrentTopic()">
+    <!-- ACCESO DIRECTO: CONTINUAR APRENDIENDO (CON TEXTO QUE NO SE SALE) -->
+    <section class="current-focus-card" id="focus-banner" onclick="jumpToCurrentTopic()">
       <div class="current-focus-left">
         <div class="focus-beacon"></div>
-        <div class="focus-text-details">
-          <div class="focus-tag">📍 Continuar aprendiendo:</div>
+        <div class="focus-content-text">
+          <div class="focus-tag">Continuar aprendiendo</div>
           <div class="focus-title" id="focus-topic-name">Cargando...</div>
         </div>
       </div>
-      <button class="focus-jump-btn">
+      <button class="focus-jump-btn" onclick="jumpToCurrentTopic(event)">
         <span>Ir ahora</span>
         <span>➔</span>
       </button>
     </section>
 
-    <!-- CONTROLES Y SELECTOR DE VISTAS -->
-    <section class="controls-bar">
-      <div class="search-wrapper">
-        <span class="search-icon">🔍</span>
-        <input type="text" id="search-topics" class="search-input" placeholder="Buscar temas, definiciones, teoremas...">
-      </div>
-
+    <!-- SELECTOR DE VISTAS (TEMARIO / RUTA) -->
+    <section class="view-bar">
       <div class="view-pills">
         <button class="view-btn active" data-view="curriculum">
           <span>📋</span> Temario
@@ -111,7 +103,7 @@
 
     <!-- CONTENEDOR PRINCIPAL INYECTADO DINÁMICAMENTE -->
     <div id="main-content-view">
-      <!-- Generado por app.js -->
+      <!-- Generado por app.js: Todos los módulos replegados al inicio -->
     </div>
 
   </main>
@@ -120,7 +112,7 @@
   <div class="modal-overlay" id="note-modal">
     <div class="modal-content">
       <h3 class="modal-title" id="note-modal-title">Apuntes del tema</h3>
-      <p class="modal-text">Escribe fórmulas clave, teoremas o notas para repasar más tarde.</p>
+      <p class="modal-text">Escribe fórmulas clave, propiedades o notas para repasar más tarde.</p>
       <textarea id="note-textarea" class="note-textarea" placeholder="Ejemplo: Notación o detalles a recordar..."></textarea>
       <div class="modal-actions-row">
         <button class="btn-secondary" onclick="closeNoteModal()">Cancelar</button>
@@ -129,7 +121,38 @@
     </div>
   </div>
 
-  <!-- CELEBRATION MODAL -->
+  <!-- MODAL DE AJUSTES (PESTAÑA APARTE PARA NO ESTORBAR ARRIBA) -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content">
+      <h3 class="modal-title">⚙️ Opciones y Respaldo</h3>
+      <p class="modal-text">Gestiona tus datos y personalización sin ocupar espacio en la barra principal.</p>
+      
+      <div class="settings-menu-list">
+        <button class="settings-btn-row" onclick="toggleTheme();">
+          <span>Tema claro / oscuro</span>
+          <span id="settings-theme-label">🌙 Cambiar</span>
+        </button>
+        <button class="settings-btn-row" onclick="exportProgress(); closeSettingsModal();">
+          <span>Exportar respaldo de progreso</span>
+          <span>💾 Descargar JSON</span>
+        </button>
+        <button class="settings-btn-row" onclick="importProgress(); closeSettingsModal();">
+          <span>Importar respaldo de progreso</span>
+          <span>📂 Cargar JSON</span>
+        </button>
+        <button class="settings-btn-row" style="color: #ef4444;" onclick="resetProgress(); closeSettingsModal();">
+          <span>Reiniciar todo el progreso</span>
+          <span>🔄 Borrar</span>
+        </button>
+      </div>
+
+      <div style="margin-top: 1.5rem;">
+        <button class="modal-close-btn" onclick="closeSettingsModal()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL DE CELEBRACIÓN -->
   <div class="modal-overlay" id="celebration-modal">
     <div class="modal-content">
       <div style="font-size: 3rem; margin-bottom: 0.5rem;">🎉</div>
@@ -139,27 +162,13 @@
     </div>
   </div>
 
-  <!-- FLOATING INSTALL BANNER FOR PWA -->
-  <div class="install-prompt-banner" id="install-banner" style="display: none;">
-    <div>
-      <div style="font-weight: 800; font-size: 0.95rem;">📲 Instalar MathMaster PWA</div>
-      <div style="font-size: 0.8rem; color: var(--text-muted);">Accede al temario offline en tu dispositivo</div>
-    </div>
-    <button class="install-banner-btn" onclick="installPWA()">Instalar</button>
-  </div>
-
   <!-- FOOTER -->
   <footer class="app-footer">
     <p>MathMaster PWA • Ruta Matemática para Ciencias de la Computación</p>
-    <div class="footer-links">
-      <button class="footer-btn" onclick="exportProgress()">📥 Exportar Datos</button>
-      <button class="footer-btn" onclick="importProgress()">📤 Importar Datos</button>
-      <button class="footer-btn" onclick="resetProgress()" style="color: #ef4444;">🔄 Reiniciar</button>
-    </div>
   </footer>
 
   <!-- Scripts con versioning -->
-  <script src="./data.js?v=2.0"></script>
-  <script src="./app.js?v=2.0"></script>
+  <script src="./data.js?v=3.0"></script>
+  <script src="./app.js?v=3.0"></script>
 </body>
 </html>
