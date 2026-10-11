@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MathMaster - Ruta Matemática para Ciencias de la Computación</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#10b981">
+  <meta name="description" content="App PWA estilo Duolingo y Khan Academy para dar seguimiento y dominar tu ruta de matemáticas">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="MathMaster">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- Google Font: Outfit (Estilo Duolingo moderno, limpio y amigable) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+  <!-- NAVBAR HEADER -->
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand" onclick="switchView('curriculum')">
+        <div class="brand-icon">∑</div>
+        <div class="brand-text">
+          <h1>MathMaster</h1>
+          <span>CS Roadmap</span>
+        </div>
+      </div>
+
+      <!-- Duolingo style stats -->
+      <div class="header-stats">
+        <div class="stat-chip streak" title="Racha de estudio diario">
+          <span>🔥</span>
+          <span id="stat-streak">1 d</span>
+        </div>
+        <div class="stat-chip xp" title="Puntos de experiencia ganados">
+          <span>⚡</span>
+          <span id="stat-xp">0 XP</span>
+        </div>
+        <div class="stat-chip level" title="Nivel alcanzado">
+          <span>👑</span>
+          <span id="stat-level">Nvl 1</span>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="header-actions">
+        <button class="icon-btn" id="theme-toggle" title="Cambiar tema claro/oscuro">☀️</button>
+        <button class="icon-btn" onclick="exportProgress()" title="Exportar respaldo de progreso">💾</button>
+        <button class="icon-btn" onclick="importProgress()" title="Importar respaldo de progreso">📂</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <main class="app-main">
+
+    <!-- HERO PROGRESS CARD (Khan Academy style overview) -->
+    <section class="hero-card">
+      <div class="hero-info">
+        <h2 class="hero-title" id="hero-percentage">0% Completado</h2>
+        <p class="hero-desc">
+          Ruta estructurada y optimizada para Ciencias de la Computación: Aritmética, Álgebra, Geometría & Trigonometría, Geometría Analítica, Cálculo Diferencial, Cálculo Integral y Módulos CS Esenciales.
+        </p>
+        <div class="overall-progress-box">
+          <div class="progress-header-info">
+            <span id="hero-topic-count">0 de 100 temas dominados</span>
+            <span style="color: var(--duo-green);">¡A por el siguiente nivel!</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="hero-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-badge-container">
+        <div class="trophy-disc">🏆</div>
+        <span style="font-weight: 800; font-size: 0.85rem; color: var(--duo-gold);">DOMINIO MATEMÁTICO</span>
+      </div>
+    </section>
+
+    <!-- CONTROLS & VIEWS TOGGLE -->
+    <section class="controls-bar">
+      <div class="search-wrapper">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-topics" class="search-input" placeholder="Buscar temas, fórmulas, teoremas...">
+      </div>
+
+      <div class="view-pills">
+        <button class="view-btn active" data-view="curriculum">
+          <span>📋</span> Temario Completo
+        </button>
+        <button class="view-btn" data-view="path">
+          <span>🗺️</span> Camino Duolingo
+        </button>
+      </div>
+    </section>
+
+    <!-- DYNAMIC INJECTED CURRICULUM OR PATH VIEW -->
+    <div id="main-content-view">
+      <!-- Generado dinámicamente por app.js -->
+    </div>
+
+  </main>
+
+  <!-- NOTE MODAL (Para apuntes personales en cada tema) -->
+  <div class="modal-overlay" id="note-modal">
+    <div class="modal-content">
+      <h3 class="modal-title" id="note-modal-title">Apuntes del tema</h3>
+      <p class="modal-text">Escribe fórmulas clave, recordatorios o dudas que quieras repasar más tarde.</p>
+      <textarea id="note-textarea" class="note-textarea" placeholder="Ejemplo: Recordar que la regla de De Morgan niega los conectores lógicos..."></textarea>
+      <div class="modal-actions-row">
+        <button class="btn-secondary" onclick="closeNoteModal()">Cancelar</button>
+        <button class="btn-primary" onclick="saveNote()">Guardar Apunte</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELEBRATION MODAL -->
+  <div class="modal-overlay" id="celebration-modal">
+    <div class="modal-content">
+      <div class="modal-icon-badge">🏆</div>
+      <h3 class="modal-title" id="celebration-title">¡Objetivo Desbloqueado!</h3>
+      <p class="modal-text" id="celebration-desc">Felicidades por seguir firme en tu aprendizaje de matemáticas.</p>
+      <button class="modal-close-btn" onclick="closeCelebrationModal()">¡Continuar Aprendiendo!</button>
+    </div>
+  </div>
+
+  <!-- FLOATING INSTALL BANNER FOR PWA -->
+  <div class="install-prompt-banner" id="install-banner" style="display: none;">
+    <div>
+      <div style="font-weight: 800; font-size: 0.95rem;">📲 Instalar MathMaster PWA</div>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Accede al temario sin internet directo en tu teléfono o PC</div>
+    </div>
+    <button class="install-banner-btn" onclick="installPWA()">Instalar</button>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="app-footer">
+    <p>MathMaster PWA • Diseñado con el espíritu de Duolingo & Khan Academy</p>
+    <div class="footer-links">
+      <button class="footer-btn" onclick="exportProgress()">📥 Exportar Datos</button>
+      <button class="footer-btn" onclick="importProgress()">📤 Importar Datos</button>
+      <button class="footer-btn" onclick="resetProgress()" style="color: #ef4444;">🔄 Reiniciar Todo</button>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
